@@ -1,3 +1,22 @@
+
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Hee-Ho bot alive ❄️');
+});
+
+// IMPORTANTE: Render usa PORT
+app.listen(process.env.PORT || 3000, () => {
+  console.log('🌐 Web server listo en Render');
+});
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Bot activo ❄️ Hee-Ho!');
+});
+
+app.listen(process.env.PORT || 3000);
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 
@@ -8,6 +27,9 @@ const client = new Client({
     GatewayIntentBits.MessageContent
   ]
 });
+
+// 📍 CANAL FIJO (TU CANAL)
+const TARGET_CHANNEL_ID = '1510696692909998201';
 
 // 📂 FILES
 const paFile = './pa.json';
@@ -45,71 +67,60 @@ function canActivity(member) {
   return member.roles.cache.some(r => roles.includes(r.name));
 }
 
-// ❄️ JACK FROST IA SYSTEM
-const TARGET_CHANNEL_ID = '1510696692909998201';
-
+// ❄️ JACK FROST SYSTEM
 let lastActivity = Date.now();
-let lastTalk = 0;
-let mood = "normal";
-const insultKeywords = [
-  'tonto', 'idiota', 'estúpido', 'basura', 'imbecil', 'mierda', 'noob', 'maldito',
-  'stupid', 'idiot', 'trash', 'noob', 'dumb', 'shit', 'loser'
+let lastHeeHo = 0;
+
+const heeHoMessages = [
+  'Hee-Ho! ❄️ / Hee-Ho! ❄️',
+
+  'Hee-Ho! El clan está vivo, ho! / Hee-Ho! The clan is alive, ho!',
+  'Hee-Ho! Jack Frost vigila, ho! / Hee-Ho! Jack Frost is watching, ho!',
+  'Hee-Ho! Más PA para el destino, ho! / Hee-Ho! More PA for destiny, ho!',
+  'Hee-Ho! Entrena o te congelas, ho! / Hee-Ho! Train or you freeze, ho!',
+  'Hee-Ho! El ranking se mueve, ho! / Hee-Ho! The ranking is shifting, ho!',
+  'Hee-Ho! Frost power, ho! / Hee-Ho! Frost power, ho!',
+  'Hee-Ho! El hielo nunca descansa / Hee-Ho! The ice never rests',
+
+  'Hee-Ho! ¡A por la victoria del clan! / Hee-Ho! Go for clan victory!',
+  'Hee-Ho! El poder del hielo crece / Hee-Ho! The power of ice grows',
+  'Hee-Ho! No olvidéis vuestros PA / Hee-Ho! Don’t forget your PA',
+
+  'Hee-Ho! Soy Jack Frost, ho! / Hee-Ho! I am Jack Frost, ho!',
+  'Hee-Ho! Te observo desde el hielo / Hee-Ho! I watch you from the ice'
 ];
-
-const insultReplies = [
-  // Español
-  "Hee-Ho... tus palabras se congelan antes de llegar, ho!",
-  "Hee-Ho! Eso no me afecta, soy hielo eterno, ho!",
-  "Hee-Ho! El insulto se rompió como hielo débil, ho!",
-  "Hee-Ho! No puedes derretir mi espíritu, ho!",
-
-  // English
-  "Hee-Ho... your words freeze before they reach me, ho!",
-  "Hee-Ho! That doesn't affect me, I'm eternal ice, ho!",
-  "Hee-Ho! Your insult shattered like weak ice, ho!",
-  "Hee-Ho! You can't melt my spirit, ho!"
-];
-
-function getRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-const msg = message.content.toLowerCase();
-
-if (insultKeywords.some(word => msg.includes(word))) {
-  return message.channel.send(getRandom(insultReplies));
-}
-const jackFrost = {
-  normal: [
-    "Hee-Ho! El hielo observa en silencio, ho!",
-    "Hee-Ho! El clan sigue creciendo, ho!",
-    "Hee-Ho! ¿Quién será el más fuerte, ho?"
-  ],
-  hype: [
-    "HEE-HO! ¡El poder del clan es enorme, ho!",
-    "Hee-Ho! ¡Esto se está poniendo interesante, ho!",
-    "Hee-Ho! ¡El ranking está en movimiento, ho!"
-  ],
-  chill: [
-    "Hee-Ho... todo está en calma, ho...",
-    "Hee-Ho... observo en silencio, ho..."
-  ],
-  angry: [
-    "Hee-Ho!! ¡Entrenad más, ho!",
-    "Hee-Ho! ¡El hielo exige más poder!"
-  ]
-};
-
-function getRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
 // 🚀 READY
 client.once('ready', () => {
   console.log(`🤖 Bot conectado como ${client.user.tag}`);
+
+  // ❄️ MENSAJES AUTOMÁTICOS
+  setInterval(async () => {
+    const now = Date.now();
+
+    const active = now - lastActivity < 60 * 60 * 1000;
+    const cooldown = now - lastHeeHo > 30 * 60 * 1000;
+
+    if (!active || !cooldown) return;
+
+    try {
+      for (const guild of client.guilds.cache.values()) {
+        const channel = guild.channels.cache.get(TARGET_CHANNEL_ID);
+        if (!channel || !channel.isTextBased()) continue;
+
+        const msg =
+          heeHoMessages[Math.floor(Math.random() * heeHoMessages.length)];
+
+        await channel.send(msg);
+      }
+
+      lastHeeHo = now;
+    } catch (err) {
+      console.error(err);
+    }
+  }, 5 * 60 * 1000);
 });
 
-// 📩 MESSAGE SYSTEM
+// 📩 MESSAGE
 client.on('messageCreate', (message) => {
   if (message.author.bot) return;
 
@@ -119,34 +130,31 @@ client.on('messageCreate', (message) => {
   const cmd = args[0];
   const users = message.mentions.users;
 
-  // ❄️ JACK FROST REACT (MENTION)
-  if (message.mentions.has(client.user)) {
-    return message.channel.send(getRandom(jackFrost[mood]));
-  }
-
-  // 🎭 MOOD CONTROL
-  const content = message.content.toLowerCase();
-
-  if (content.startsWith('!raid')) mood = "hype";
-  if (content.startsWith('!clanwar')) mood = "angry";
-  if (content.startsWith('!entrenamiento')) mood = "normal";
-
   // =========================
   // 🆘 HELP
   // =========================
   if (cmd === '!help') {
     const embed = new EmbedBuilder()
       .setColor(0x00AEFF)
-      .setTitle('🆘 RPG CLAN HELP')
+      .setTitle('🆘 RPG CLAN HELP ❄️')
       .addFields(
-        { name: '🎮 GENERAL', value: '!pa !ranking !panel' },
-        { name: '⚔️ ACTIVITY', value: '!raid !entrenamiento !clanwar' },
-        { name: '🔵 PD', value: '!addpd !removepd !viewpd' },
-        { name: '🟢 PA ADMIN', value: '!addpa !removepa' }
+        { name: '🎮 GENERAL', value: '!pa !ranking !panel !heeho' },
+        { name: '⚔️ ACTIVIDAD', value: '!raid !entrenamiento !clanwar' },
+        { name: '📦 PD', value: '!addpd !removepd !viewpd' },
+        { name: '🟢 ADMIN PA', value: '!addpa !removepa' }
       )
-      .setFooter({ text: 'Hee-Ho RPG System ❄️' });
+      .setFooter({ text: 'Hee-Ho System ❄️' });
 
     return message.channel.send({ embeds: [embed] });
+  }
+
+  // =========================
+  // ❄️ HEEHO
+  // =========================
+  if (cmd === '!heeho') {
+    return message.channel.send(
+      heeHoMessages[Math.floor(Math.random() * heeHoMessages.length)]
+    );
   }
 
   // =========================
@@ -200,7 +208,7 @@ client.on('messageCreate', (message) => {
     users.forEach(u => pa[u.id] = get(pa, u.id) + 1);
     savePA();
 
-    return message.reply('⚔️ +1 PA RAID Hee-Ho!');
+    return message.reply('⚔️ +1 PA ❄️ Hee-Ho RAID!');
   }
 
   // =========================
@@ -213,7 +221,7 @@ client.on('messageCreate', (message) => {
     users.forEach(u => pa[u.id] = get(pa, u.id) + 1);
     savePA();
 
-    return message.reply('🏋️ +1 PA Hee-Ho!');
+    return message.reply('🏋️ +1 PA ❄️');
   }
 
   // =========================
@@ -226,7 +234,7 @@ client.on('messageCreate', (message) => {
     users.forEach(u => pa[u.id] = get(pa, u.id) + 2);
     savePA();
 
-    return message.reply('⚔️ +2 PA CLAN WAR!');
+    return message.reply('⚔️ +2 PA ❄️');
   }
 
   // =========================
@@ -242,7 +250,7 @@ client.on('messageCreate', (message) => {
     pa[target.id] = get(pa, target.id) + amount;
     savePA();
 
-    return message.reply(`✅ +${amount} PA a ${target.username}`);
+    return message.reply(`✅ +${amount} PA ❄️`);
   }
 
   // =========================
@@ -258,7 +266,7 @@ client.on('messageCreate', (message) => {
     pa[target.id] = get(pa, target.id) - amount;
     savePA();
 
-    return message.reply(`⚠️ -${amount} PA a ${target.username}`);
+    return message.reply(`⚠️ -${amount} PA ❄️`);
   }
 
   // =========================
@@ -280,13 +288,29 @@ client.on('messageCreate', (message) => {
       case 'high': value = amount * 5; break;
       case 'event': value = amount * 8; break;
       case 'equip': value = amount * 6; break;
-      default: return message.reply('Tipo inválido');
+      case 'division': value = amount * 6; break;
     }
 
     pd[target.id] = get(pd, target.id) + value;
     savePD();
 
-    return message.reply(`📦 +${value} PD a ${target.username}`);
+    return message.reply(`📦 +${value} PD ❄️`);
+  }
+
+  // =========================
+  // 🔴 REMOVE PD
+  // =========================
+  if (cmd === '!removepd') {
+    if (!isLeader(message.member))
+      return message.reply('❌ Solo líderes.');
+
+    const target = users.first();
+    const amount = parseInt(args[2]);
+
+    pd[target.id] = get(pd, target.id) - amount;
+    savePD();
+
+    return message.reply(`⚠️ -${amount} PD ❄️`);
   }
 
   // =========================
@@ -298,31 +322,4 @@ client.on('messageCreate', (message) => {
   }
 });
 
-// ❄️ JACK FROST HABLA SOLO
-setInterval(async () => {
-  const now = Date.now();
-
-  const channel = client.channels.cache.get(TARGET_CHANNEL_ID);
-  if (!channel) return;
-
-  const active = now - lastActivity < 60 * 60 * 1000;
-  const cooldown = now - lastTalk > 12 * 60 * 1000;
-
-  if (!active || !cooldown) return;
-
-  const line = getRandom(jackFrost[mood]);
-
-  try {
-    await channel.send(line);
-    lastTalk = now;
-  } catch (err) {
-    console.error(err);
-  }
-}, 3 * 60 * 1000);
-
-// 🛡️ ANTI CRASH
-process.on('unhandledRejection', console.error);
-process.on('uncaughtException', console.error);
-
-// 🔑 LOGIN
 client.login(process.env.TOKEN);
