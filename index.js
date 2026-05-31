@@ -51,7 +51,34 @@ const TARGET_CHANNEL_ID = '1510696692909998201';
 let lastActivity = Date.now();
 let lastTalk = 0;
 let mood = "normal";
+const insultKeywords = [
+  'tonto', 'idiota', 'estúpido', 'basura', 'imbecil', 'mierda', 'noob', 'maldito',
+  'stupid', 'idiot', 'trash', 'noob', 'dumb', 'shit', 'loser'
+];
 
+const insultReplies = [
+  // Español
+  "Hee-Ho... tus palabras se congelan antes de llegar, ho!",
+  "Hee-Ho! Eso no me afecta, soy hielo eterno, ho!",
+  "Hee-Ho! El insulto se rompió como hielo débil, ho!",
+  "Hee-Ho! No puedes derretir mi espíritu, ho!",
+
+  // English
+  "Hee-Ho... your words freeze before they reach me, ho!",
+  "Hee-Ho! That doesn't affect me, I'm eternal ice, ho!",
+  "Hee-Ho! Your insult shattered like weak ice, ho!",
+  "Hee-Ho! You can't melt my spirit, ho!"
+];
+
+function getRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+const msg = message.content.toLowerCase();
+
+if (insultKeywords.some(word => msg.includes(word))) {
+  return message.channel.send(getRandom(insultReplies));
+}
 const jackFrost = {
   normal: [
     "Hee-Ho! El hielo observa en silencio, ho!",
