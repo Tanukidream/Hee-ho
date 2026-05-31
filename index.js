@@ -1,4 +1,15 @@
+
 const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Hee-Ho bot alive ❄️');
+});
+
+// IMPORTANTE: Render usa PORT
+app.listen(process.env.PORT || 3000, () => {
+  console.log('🌐 Web server listo en Render');
+});
 const app = express();
 
 app.get('/', (req, res) => {
