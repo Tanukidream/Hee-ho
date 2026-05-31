@@ -10,7 +10,7 @@ app.get('/', (req, res) => {
 app.listen(process.env.PORT || 3000, () => {
   console.log('🌐 Web server listo en Render');
 });
-const app = express();
+
 
 app.get('/', (req, res) => {
   res.send('Bot activo ❄️ Hee-Ho!');
