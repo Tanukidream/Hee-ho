@@ -1,25 +1,9 @@
-
-const express = require('express');
-const app = express();
-
-app.get('/', (req, res) => {
-  res.send('Hee-Ho bot alive ❄️');
-});
-
-// IMPORTANTE: Render usa PORT
-app.listen(process.env.PORT || 3000, () => {
-  console.log('🌐 Web server listo en Render');
-});
-
-
-app.get('/', (req, res) => {
-  res.send('Bot activo ❄️ Hee-Ho!');
-});
-
-app.listen(process.env.PORT || 3000);
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 
+// =====================
+// CLIENT (OPTIMIZADO)
+// =====================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -28,10 +12,14 @@ const client = new Client({
   ]
 });
 
-// 📍 CANAL FIJO (TU CANAL)
+// =====================
+// CONFIG
+// =====================
 const TARGET_CHANNEL_ID = '1510696692909998201';
 
-// 📂 FILES
+// =====================
+// FILES (LIGHT LOAD)
+// =====================
 const paFile = './pa.json';
 const pdFile = './pd.json';
 
@@ -41,22 +29,24 @@ let pd = {};
 if (fs.existsSync(paFile)) pa = JSON.parse(fs.readFileSync(paFile));
 if (fs.existsSync(pdFile)) pd = JSON.parse(fs.readFileSync(pdFile));
 
-// 💾 SAVE
-function savePA() {
-  fs.writeFileSync(paFile, JSON.stringify(pa, null, 2));
+// =====================
+// SAVE (SAFE WRITE)
+// =====================
+function save(file, data) {
+  fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-function savePD() {
-  fs.writeFileSync(pdFile, JSON.stringify(pd, null, 2));
-}
-
-// 🧠 GET SAFE
+// =====================
+// GET SAFE
+// =====================
 function get(obj, id) {
   if (!obj[id]) obj[id] = 0;
   return obj[id];
 }
 
-// 🔐 ROLES
+// =====================
+// ROLES
+// =====================
 const roles = ['loki', 'Captain'];
 
 function isLeader(member) {
@@ -67,60 +57,50 @@ function canActivity(member) {
   return member.roles.cache.some(r => roles.includes(r.name));
 }
 
-// ❄️ JACK FROST SYSTEM
+// =====================
+// JACK FROST SYSTEM (LIGHT)
+// =====================
 let lastActivity = Date.now();
-let lastHeeHo = 0;
+let lastTalk = 0;
 
 const heeHoMessages = [
-  'Hee-Ho! ❄️ / Hee-Ho! ❄️',
-
-  'Hee-Ho! El clan está vivo, ho! / Hee-Ho! The clan is alive, ho!',
-  'Hee-Ho! Jack Frost vigila, ho! / Hee-Ho! Jack Frost is watching, ho!',
-  'Hee-Ho! Más PA para el destino, ho! / Hee-Ho! More PA for destiny, ho!',
-  'Hee-Ho! Entrena o te congelas, ho! / Hee-Ho! Train or you freeze, ho!',
-  'Hee-Ho! El ranking se mueve, ho! / Hee-Ho! The ranking is shifting, ho!',
-  'Hee-Ho! Frost power, ho! / Hee-Ho! Frost power, ho!',
-  'Hee-Ho! El hielo nunca descansa / Hee-Ho! The ice never rests',
-
-  'Hee-Ho! ¡A por la victoria del clan! / Hee-Ho! Go for clan victory!',
-  'Hee-Ho! El poder del hielo crece / Hee-Ho! The power of ice grows',
-  'Hee-Ho! No olvidéis vuestros PA / Hee-Ho! Don’t forget your PA',
-
-  'Hee-Ho! Soy Jack Frost, ho! / Hee-Ho! I am Jack Frost, ho!',
-  'Hee-Ho! Te observo desde el hielo / Hee-Ho! I watch you from the ice'
+  "Hee-Ho! ❄️",
+  "Hee-Ho! The ice is alive!",
+  "Hee-Ho! El clan sigue creciendo!",
+  "Hee-Ho! Train or freeze!"
 ];
-// 🚀 READY
-client.once('ready', () => {
-  console.log(`🤖 Bot conectado como ${client.user.tag}`);
 
-  // ❄️ MENSAJES AUTOMÁTICOS
+function rand(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// =====================
+// READY
+// =====================
+client.once('ready', () => {
+  console.log(`🤖 Online como ${client.user.tag}`);
+
+  // reduced interval (RAM SAFE)
   setInterval(async () => {
     const now = Date.now();
 
     const active = now - lastActivity < 60 * 60 * 1000;
-    const cooldown = now - lastHeeHo > 30 * 60 * 1000;
+    const cooldown = now - lastTalk > 20 * 60 * 1000;
 
     if (!active || !cooldown) return;
 
-    try {
-      for (const guild of client.guilds.cache.values()) {
-        const channel = guild.channels.cache.get(TARGET_CHANNEL_ID);
-        if (!channel || !channel.isTextBased()) continue;
+    const channel = client.channels.cache.get(TARGET_CHANNEL_ID);
+    if (!channel) return;
 
-        const msg =
-          heeHoMessages[Math.floor(Math.random() * heeHoMessages.length)];
+    await channel.send(rand(heeHoMessages));
 
-        await channel.send(msg);
-      }
-
-      lastHeeHo = now;
-    } catch (err) {
-      console.error(err);
-    }
-  }, 5 * 60 * 1000);
+    lastTalk = now;
+  }, 10 * 60 * 1000);
 });
 
-// 📩 MESSAGE
+// =====================
+// MESSAGE SYSTEM
+// =====================
 client.on('messageCreate', (message) => {
   if (message.author.bot) return;
 
@@ -130,50 +110,39 @@ client.on('messageCreate', (message) => {
   const cmd = args[0];
   const users = message.mentions.users;
 
-  // =========================
-  // 🆘 HELP
-  // =========================
+  // =====================
+  // HELP
+  // =====================
   if (cmd === '!help') {
     const embed = new EmbedBuilder()
       .setColor(0x00AEFF)
-      .setTitle('🆘 RPG CLAN HELP ❄️')
+      .setTitle('❄️ Hee-Ho RPG HELP')
       .addFields(
-        { name: '🎮 GENERAL', value: '!pa !ranking !panel !heeho' },
-        { name: '⚔️ ACTIVIDAD', value: '!raid !entrenamiento !clanwar' },
-        { name: '📦 PD', value: '!addpd !removepd !viewpd' },
-        { name: '🟢 ADMIN PA', value: '!addpa !removepa' }
-      )
-      .setFooter({ text: 'Hee-Ho System ❄️' });
+        { name: 'General', value: '!pa !ranking !panel' },
+        { name: 'Activity', value: '!raid !entrenamiento !clanwar' },
+        { name: 'Admin', value: '!addpa !removepa !addpd' }
+      );
 
     return message.channel.send({ embeds: [embed] });
   }
 
-  // =========================
-  // ❄️ HEEHO
-  // =========================
-  if (cmd === '!heeho') {
-    return message.channel.send(
-      heeHoMessages[Math.floor(Math.random() * heeHoMessages.length)]
-    );
-  }
-
-  // =========================
-  // 📊 PA
-  // =========================
+  // =====================
+  // PA
+  // =====================
   if (cmd === '!pa') {
     const user = users.first() || message.author;
     return message.reply(`🏆 ${user.username}: ${get(pa, user.id)} PA`);
   }
 
-  // =========================
-  // 🏆 RANKING
-  // =========================
+  // =====================
+  // RANKING
+  // =====================
   if (cmd === '!ranking') {
     const sorted = Object.entries(pa)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
 
-    let msg = '🏆 RANKING PA:\n';
+    let msg = '🏆 RANKING:\n';
     sorted.forEach((u, i) => {
       msg += `${i + 1}. <@${u[0]}> — ${u[1]} PA\n`;
     });
@@ -181,145 +150,85 @@ client.on('messageCreate', (message) => {
     return message.channel.send(msg);
   }
 
-  // =========================
-  // 🎮 PANEL
-  // =========================
+  // =====================
+  // PANEL
+  // =====================
   if (cmd === '!panel') {
     const user = message.author;
 
     const embed = new EmbedBuilder()
       .setColor(0x00AEFF)
-      .setTitle('🎮 RPG PANEL ❄️')
+      .setTitle('❄️ PANEL')
       .addFields(
-        { name: '🏆 PA', value: `${get(pa, user.id)}`, inline: true },
-        { name: '📦 PD', value: `${get(pd, user.id)}`, inline: true }
+        { name: 'PA', value: `${get(pa, user.id)}`, inline: true },
+        { name: 'PD', value: `${get(pd, user.id)}`, inline: true }
       );
 
     return message.channel.send({ embeds: [embed] });
   }
 
-  // =========================
-  // ⚔️ RAID
-  // =========================
+  // =====================
+  // ACTIVITY (SAFE)
+  // =====================
   if (cmd === '!raid') {
-    if (!canActivity(message.member))
-      return message.reply('❌ Sin permisos.');
+    if (!canActivity(message.member)) return;
 
     users.forEach(u => pa[u.id] = get(pa, u.id) + 1);
-    savePA();
+    save(paFile, pa);
 
-    return message.reply('⚔️ +1 PA ❄️ Hee-Ho RAID!');
+    return message.reply('Hee-Ho RAID +1 PA');
   }
 
-  // =========================
-  // 🏋️ TRAIN
-  // =========================
   if (cmd === '!entrenamiento') {
-    if (!canActivity(message.member))
-      return message.reply('❌ Sin permisos.');
+    if (!canActivity(message.member)) return;
 
     users.forEach(u => pa[u.id] = get(pa, u.id) + 1);
-    savePA();
+    save(paFile, pa);
 
-    return message.reply('🏋️ +1 PA ❄️');
+    return message.reply('Training +1 PA');
   }
 
-  // =========================
-  // ⚔️ CLANWAR
-  // =========================
   if (cmd === '!clanwar') {
-    if (!canActivity(message.member))
-      return message.reply('❌ Sin permisos.');
+    if (!canActivity(message.member)) return;
 
     users.forEach(u => pa[u.id] = get(pa, u.id) + 2);
-    savePA();
+    save(paFile, pa);
 
-    return message.reply('⚔️ +2 PA ❄️');
+    return message.reply('Clanwar +2 PA');
   }
 
-  // =========================
-  // 🟢 ADD PA
-  // =========================
+  // =====================
+  // ADD PA
+  // =====================
   if (cmd === '!addpa') {
-    if (!isLeader(message.member))
-      return message.reply('❌ Solo líderes.');
+    if (!isLeader(message.member)) return;
 
     const target = users.first();
     const amount = parseInt(args[2]);
 
     pa[target.id] = get(pa, target.id) + amount;
-    savePA();
+    save(paFile, pa);
 
-    return message.reply(`✅ +${amount} PA ❄️`);
+    return message.reply(`+${amount} PA`);
   }
 
-  // =========================
-  // 🔴 REMOVE PA
-  // =========================
-  if (cmd === '!removepa') {
-    if (!isLeader(message.member))
-      return message.reply('❌ Solo líderes.');
-
-    const target = users.first();
-    const amount = parseInt(args[2]);
-
-    pa[target.id] = get(pa, target.id) - amount;
-    savePA();
-
-    return message.reply(`⚠️ -${amount} PA ❄️`);
-  }
-
-  // =========================
-  // 🔵 ADD PD
-  // =========================
+  // =====================
+  // ADD PD (SIMPLE)
+  // =====================
   if (cmd === '!addpd') {
-    if (!isLeader(message.member))
-      return message.reply('❌ Solo líderes.');
+    if (!isLeader(message.member)) return;
 
     const target = users.first();
-    const type = args[2];
     const amount = parseInt(args[3]);
 
-    let value = 0;
+    pd[target.id] = get(pd, target.id) + amount;
+    save(pdFile, pd);
 
-    switch (type) {
-      case 'basic': value = (amount / 1000); break;
-      case 'medium': value = amount * 3; break;
-      case 'high': value = amount * 5; break;
-      case 'event': value = amount * 8; break;
-      case 'equip': value = amount * 6; break;
-      case 'division': value = amount * 6; break;
-    }
-
-    pd[target.id] = get(pd, target.id) + value;
-    savePD();
-
-    return message.reply(`📦 +${value} PD ❄️`);
-  }
-
-  // =========================
-  // 🔴 REMOVE PD
-  // =========================
-  if (cmd === '!removepd') {
-    if (!isLeader(message.member))
-      return message.reply('❌ Solo líderes.');
-
-    const target = users.first();
-    const amount = parseInt(args[2]);
-
-    pd[target.id] = get(pd, target.id) - amount;
-    savePD();
-
-    return message.reply(`⚠️ -${amount} PD ❄️`);
-  }
-
-  // =========================
-  // 👀 VIEW PD
-  // =========================
-  if (cmd === '!viewpd') {
-    const user = users.first() || message.author;
-    return message.reply(`📦 ${user.username}: ${get(pd, user.id)} PD`);
+    return message.reply(`+${amount} PD`);
   }
 });
 
+// =====================
+// LOGIN
+// =====================
 client.login(process.env.TOKEN);
