@@ -1,14 +1,11 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 
-// =====================
-// EXPRESS (OBLIGATORIO RENDER)
-// =====================
 const express = require('express');
 const app = express();
 
 app.get('/', (req, res) => {
-  res.send('Hee-Ho bot online ❄️');
+  res.send('Hee-Ho bot online ❄️ Hee-Ho System');
 });
 
 const PORT = process.env.PORT || 10000;
@@ -18,7 +15,7 @@ app.listen(PORT, () => {
 });
 
 // =====================
-// CLIENT
+// BOT CLIENT
 // =====================
 const client = new Client({
   intents: [
@@ -53,7 +50,7 @@ function save(file, data) {
 }
 
 // =====================
-// GET SAFE
+// SAFE GET
 // =====================
 function get(obj, id) {
   if (!obj[id]) obj[id] = 0;
@@ -83,8 +80,7 @@ const heeHoMessages = [
   "Hee-Ho! ❄️",
   "Hee-Ho! The ice is alive!",
   "Hee-Ho! El clan sigue creciendo!",
-  "Hee-Ho! Train or freeze!",
-  "Hee-Ho! Jack Frost vigila!"
+  "Hee-Ho! Train or freeze!"
 ];
 
 function rand(arr) {
@@ -109,13 +105,13 @@ client.once('ready', () => {
     if (!channel) return;
 
     await channel.send(rand(heeHoMessages));
-
     lastTalk = now;
+
   }, 10 * 60 * 1000);
 });
 
 // =====================
-// MESSAGE SYSTEM
+// MESSAGE
 // =====================
 client.on('messageCreate', (message) => {
   if (message.author.bot) return;
@@ -127,6 +123,26 @@ client.on('messageCreate', (message) => {
   const users = message.mentions.users;
 
   // =====================
+  // HELP COMMANDS
+  // =====================
+  if (!cmd.startsWith('!')) return;
+
+  // ❌ UNKNOWN COMMAND
+  const validCommands = [
+    '!help','!heeho','!pa','!ranking','!panel',
+    '!raid','!entrenamiento','!clanwar',
+    '!addpa','!removepa','!addpd','!removepd'
+  ];
+
+  if (!validCommands.includes(cmd)) {
+    return message.reply(
+      `❌ Comando desconocido.\n\n` +
+      `✔️ Ejemplo:\n` +
+      `!help | !pa | !raid @user`
+    );
+  }
+
+  // =====================
   // HELP
   // =====================
   if (cmd === '!help') {
@@ -136,19 +152,18 @@ client.on('messageCreate', (message) => {
       .addFields(
         { name: 'General', value: '!pa !ranking !panel !heeho' },
         { name: 'Activity', value: '!raid !entrenamiento !clanwar' },
-        { name: 'Admin', value: '!addpa !removepa !addpd' }
+        { name: 'Admin PA', value: '!addpa @user 10 | !removepa @user 10' },
+        { name: 'Admin PD', value: '!addpd @user 10 | !removepd @user 10' }
       );
 
     return message.channel.send({ embeds: [embed] });
   }
 
   // =====================
-  // HEEHO COMMAND (FIXED)
+  // HEEHO
   // =====================
   if (cmd === '!heeho') {
-    return message.channel.send({
-      content: rand(heeHoMessages)
-    });
+    return message.channel.send(rand(heeHoMessages));
   }
 
   // =====================
@@ -183,7 +198,7 @@ client.on('messageCreate', (message) => {
 
     const embed = new EmbedBuilder()
       .setColor(0x00AEFF)
-      .setTitle('❄️ PANEL')
+      .setTitle('❄️ Hee-Ho System')
       .addFields(
         { name: 'PA', value: `${get(pa, user.id)}`, inline: true },
         { name: 'PD', value: `${get(pd, user.id)}`, inline: true }
@@ -195,41 +210,31 @@ client.on('messageCreate', (message) => {
   // =====================
   // ACTIVITY
   // =====================
-  if (cmd === '!raid') {
-    if (!canActivity(message.member)) return;
+  if (cmd === '!raid' || cmd === '!entrenamiento' || cmd === '!clanwar') {
+    if (!canActivity(message.member)) {
+      return message.reply('❌ No tienes permisos.');
+    }
 
-    users.forEach(u => pa[u.id] = get(pa, u.id) + 1);
+    const value = cmd === '!clanwar' ? 2 : 1;
+
+    users.forEach(u => pa[u.id] = get(pa, u.id) + value);
     save(paFile, pa);
 
-    return message.reply('Hee-Ho RAID +1 PA');
-  }
-
-  if (cmd === '!entrenamiento') {
-    if (!canActivity(message.member)) return;
-
-    users.forEach(u => pa[u.id] = get(pa, u.id) + 1);
-    save(paFile, pa);
-
-    return message.reply('Training +1 PA');
-  }
-
-  if (cmd === '!clanwar') {
-    if (!canActivity(message.member)) return;
-
-    users.forEach(u => pa[u.id] = get(pa, u.id) + 2);
-    save(paFile, pa);
-
-    return message.reply('Clanwar +2 PA');
+    return message.reply(`❄️ +${value} PA`);
   }
 
   // =====================
   // ADD PA
   // =====================
   if (cmd === '!addpa') {
-    if (!isLeader(message.member)) return;
+    if (!isLeader(message.member))
+      return message.reply('Uso: !addpa @user cantidad');
 
     const target = users.first();
     const amount = parseInt(args[2]);
+
+    if (!target || isNaN(amount))
+      return message.reply('Uso correcto: !addpa @user 10');
 
     pa[target.id] = get(pa, target.id) + amount;
     save(paFile, pa);
@@ -238,18 +243,60 @@ client.on('messageCreate', (message) => {
   }
 
   // =====================
+  // REMOVE PA
+  // =====================
+  if (cmd === '!removepa') {
+    if (!isLeader(message.member))
+      return message.reply('Uso: !removepa @user cantidad');
+
+    const target = users.first();
+    const amount = parseInt(args[2]);
+
+    if (!target || isNaN(amount))
+      return message.reply('Uso correcto: !removepa @user 10');
+
+    pa[target.id] = get(pa, target.id) - amount;
+    save(paFile, pa);
+
+    return message.reply(`-${amount} PA`);
+  }
+
+  // =====================
   // ADD PD
   // =====================
   if (cmd === '!addpd') {
-    if (!isLeader(message.member)) return;
+    if (!isLeader(message.member))
+      return message.reply('Uso: !addpd @user cantidad');
 
     const target = users.first();
-    const amount = parseInt(args[3]);
+    const amount = parseInt(args[2]);
+
+    if (!target || isNaN(amount))
+      return message.reply('Uso correcto: !addpd @user 10');
 
     pd[target.id] = get(pd, target.id) + amount;
     save(pdFile, pd);
 
     return message.reply(`+${amount} PD`);
+  }
+
+  // =====================
+  // REMOVE PD
+  // =====================
+  if (cmd === '!removepd') {
+    if (!isLeader(message.member))
+      return message.reply('Uso: !removepd @user cantidad');
+
+    const target = users.first();
+    const amount = parseInt(args[2]);
+
+    if (!target || isNaN(amount))
+      return message.reply('Uso correcto: !removepd @user 10');
+
+    pd[target.id] = get(pd, target.id) - amount;
+    save(pdFile, pd);
+
+    return message.reply(`-${amount} PD`);
   }
 });
 
