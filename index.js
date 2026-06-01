@@ -1,6 +1,9 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 
+// =====================
+// EXPRESS (OBLIGATORIO RENDER)
+// =====================
 const express = require('express');
 const app = express();
 
@@ -15,7 +18,7 @@ app.listen(PORT, () => {
 });
 
 // =====================
-// CLIENT (OPTIMIZADO)
+// CLIENT
 // =====================
 const client = new Client({
   intents: [
@@ -31,7 +34,7 @@ const client = new Client({
 const TARGET_CHANNEL_ID = '1510696692909998201';
 
 // =====================
-// FILES (LIGHT LOAD)
+// FILES
 // =====================
 const paFile = './pa.json';
 const pdFile = './pd.json';
@@ -43,7 +46,7 @@ if (fs.existsSync(paFile)) pa = JSON.parse(fs.readFileSync(paFile));
 if (fs.existsSync(pdFile)) pd = JSON.parse(fs.readFileSync(pdFile));
 
 // =====================
-// SAVE (SAFE WRITE)
+// SAVE
 // =====================
 function save(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
@@ -71,7 +74,7 @@ function canActivity(member) {
 }
 
 // =====================
-// JACK FROST SYSTEM (LIGHT)
+// JACK FROST SYSTEM
 // =====================
 let lastActivity = Date.now();
 let lastTalk = 0;
@@ -80,7 +83,8 @@ const heeHoMessages = [
   "Hee-Ho! ❄️",
   "Hee-Ho! The ice is alive!",
   "Hee-Ho! El clan sigue creciendo!",
-  "Hee-Ho! Train or freeze!"
+  "Hee-Ho! Train or freeze!",
+  "Hee-Ho! Jack Frost vigila!"
 ];
 
 function rand(arr) {
@@ -93,7 +97,6 @@ function rand(arr) {
 client.once('ready', () => {
   console.log(`🤖 Online como ${client.user.tag}`);
 
-  // reduced interval (RAM SAFE)
   setInterval(async () => {
     const now = Date.now();
 
@@ -129,14 +132,23 @@ client.on('messageCreate', (message) => {
   if (cmd === '!help') {
     const embed = new EmbedBuilder()
       .setColor(0x00AEFF)
-      .setTitle('❄️ Hee-Ho RPG HELP')
+      .setTitle('❄️ Hee-Ho RPG System')
       .addFields(
-        { name: 'General', value: '!pa !ranking !panel' },
+        { name: 'General', value: '!pa !ranking !panel !heeho' },
         { name: 'Activity', value: '!raid !entrenamiento !clanwar' },
         { name: 'Admin', value: '!addpa !removepa !addpd' }
       );
 
     return message.channel.send({ embeds: [embed] });
+  }
+
+  // =====================
+  // HEEHO COMMAND (FIXED)
+  // =====================
+  if (cmd === '!heeho') {
+    return message.channel.send({
+      content: rand(heeHoMessages)
+    });
   }
 
   // =====================
@@ -181,7 +193,7 @@ client.on('messageCreate', (message) => {
   }
 
   // =====================
-  // ACTIVITY (SAFE)
+  // ACTIVITY
   // =====================
   if (cmd === '!raid') {
     if (!canActivity(message.member)) return;
@@ -226,7 +238,7 @@ client.on('messageCreate', (message) => {
   }
 
   // =====================
-  // ADD PD (SIMPLE)
+  // ADD PD
   // =====================
   if (cmd === '!addpd') {
     if (!isLeader(message.member)) return;
