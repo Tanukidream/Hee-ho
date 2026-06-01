@@ -1,6 +1,19 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Hee-Ho bot online ❄️');
+});
+
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, () => {
+  console.log(`🌐 Web server activo en puerto ${PORT}`);
+});
+
 // =====================
 // CLIENT (OPTIMIZADO)
 // =====================
